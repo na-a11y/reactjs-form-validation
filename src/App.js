@@ -5,25 +5,43 @@ function App() {
   // State for form fields and errors
   const [form, setForm] = useState({ fullname: '', email: '', phone: '', password: '' });
   const [errors, setErrors] = useState({ fullname: '', email: '', phone: '', password: '' });
+  const [submitError, setSubmitError] = useState(''); // State for submission errors
+
+  // Custom exception classes
+  class ValidationError extends Error {
+    constructor(message, statusCode) {
+      super(message);
+      this.statusCode = statusCode;
+    }
+  }
+
+  class StorageError extends Error {
+    constructor(message, statusCode) {
+      super(message);
+      this.statusCode = statusCode;
+    }
+  }
 
   // Validate individual form fields
   const validateField = (name, value) => {
     let error = '';
     switch (name) {
       case 'fullname':
-        if (!value) error = 'Full name is required';
+        if (!value) throw new ValidationError('Full name is required', 400);
+        else if (!/^[A-Z]/.test(value)) throw new ValidationError('Full name must start with a capital letter', 400);
         break;
       case 'email':
-        if (!value) error = 'Email is required';
-        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Invalid email format';
+        if (!value) throw new ValidationError('Email is required', 400);
+        else if (!/\S+@\S+\.\S+/.test(value)) throw new ValidationError('Invalid email format', 400);
         break;
       case 'phone':
-        if (!value) error = 'Phone number is required';
-        else if (!/^\d{10}$/.test(value)) error = 'Phone number must be 10 digits';
+        if (!value) throw new ValidationError('Phone number is required', 400);
+        else if (!/^[789]\d{9}$/.test(value)) throw new ValidationError('Phone number must start with 7, 8, or 9 and be 10 digits', 400);
         break;
       case 'password':
-        if (!value) error = 'Password is required';
-        else if (value.length < 6) error = 'Password must be at least 6 characters';
+        if (!value) throw new ValidationError('Password is required', 400);
+        else if (value.length < 6) throw new ValidationError('Password must be at least 6 characters', 400);
+        else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(value)) throw new ValidationError('Password must contain lowercase, uppercase, number, and special character', 400);
         break;
       default:
         break;
@@ -34,9 +52,15 @@ function App() {
   // Handle form field changes and validate
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    const error = validateField(name, value);
-    setErrors({ ...errors, [name]: error });
+    try {
+      setForm({ ...form, [name]: value });
+      validateField(name, value);
+      setErrors({ ...errors, [name]: '' });
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        setErrors({ ...errors, [name]: error.message });
+      }
+    }
   };
 
   // Handle form submission
@@ -47,19 +71,43 @@ function App() {
     let newErrors = { fullname: '', email: '', phone: '', password: '' };
 
     // Validate all fields before submission
-    newErrors.fullname = validateField('fullname', fullname);
-    newErrors.email = validateField('email', email);
-    newErrors.phone = validateField('phone', phone);
-    newErrors.password = validateField('password', password);
-
-    if (Object.values(newErrors).some(error => error)) {
+    try {
+      validateField('fullname', fullname);
+    } catch (error) {
       valid = false;
+      newErrors.fullname = error.message;
+    }
+
+    try {
+      validateField('email', email);
+    } catch (error) {
+      valid = false;
+      newErrors.email = error.message;
+    }
+
+    try {
+      validateField('phone', phone);
+    } catch (error) {
+      valid = false;
+      newErrors.phone = error.message;
+    }
+
+    try {
+      validateField('password', password);
+    } catch (error) {
+      valid = false;
+      newErrors.password = error.message;
     }
 
     if (valid) {
-      // Store data in localStorage
-      localStorage.setItem('formData', JSON.stringify(form));
-      alert('Form data saved successfully!');
+      try {
+        // Store data in localStorage
+        localStorage.setItem('formData', JSON.stringify(form));
+        alert('Form data saved successfully!');
+      } catch (error) {
+        console.error('Error saving form data:', error);
+        throw new StorageError('Failed to save form data. Please try again.', 500);
+      }
     } else {
       setErrors(newErrors);
     }
@@ -67,9 +115,14 @@ function App() {
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const storedData = localStorage.getItem('formData');
-    if (storedData) {
-      setForm(JSON.parse(storedData));
+    try {
+      const storedData = localStorage.getItem('formData');
+      if (storedData) {
+        setForm(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error('Error loading form data:', error);
+      throw new StorageError('Failed to load saved data. Please try again.', 500);
     }
   }, []);
 
@@ -77,6 +130,7 @@ function App() {
     <div className="App">
       <h1>Registration Form Using ReactJS</h1>
       <form onSubmit={handleSubmit} className="form">
+        {submitError && <p className="submit-error">{submitError}</p>}
         <div className="form-group">
           <label htmlFor="fullname">Full Name:</label>
           <input
@@ -86,8 +140,8 @@ function App() {
             value={form.fullname}
             onChange={handleChange}
           />
-          {errors.fullname && <p className="error">{errors.fullname}</p>}
         </div>
+        {errors.fullname && <p className="error">{errors.fullname}</p>}
 
         <div className="form-group">
           <label htmlFor="email">Email:</label>
@@ -98,8 +152,8 @@ function App() {
             value={form.email}
             onChange={handleChange}
           />
-          {errors.email && <p className="error">{errors.email}</p>}
         </div>
+        {errors.email && <p className="error">{errors.email}</p>}
 
         <div className="form-group">
           <label htmlFor="phone">Phone Number:</label>
@@ -110,8 +164,8 @@ function App() {
             value={form.phone}
             onChange={handleChange}
           />
-          {errors.phone && <p className="error">{errors.phone}</p>}
         </div>
+        {errors.phone && <p className="error">{errors.phone}</p>}
 
         <div className="form-group">
           <label htmlFor="password">Password:</label>
@@ -122,8 +176,8 @@ function App() {
             value={form.password}
             onChange={handleChange}
           />
-          {errors.password && <p className="error">{errors.password}</p>}
         </div>
+        {errors.password && <p className="error">{errors.password}</p>}
 
         <button type="submit">Submit</button>
       </form>
