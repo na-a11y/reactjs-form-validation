@@ -1,0 +1,78 @@
+.App {
+  max-width: 600px;
+  margin: 40px auto; /* Margin for outer spacing */
+  padding: 30px; /* Padding for inner spacing */
+  text-align: center;
+  background-color: #FFFFFF; /* White background color */
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+
+h1 {
+  color: #000000; /* Black color for the heading */
+  font-size: 2.2em;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #CCCCCC; /* Light gray border color */
+  border-radius: 4px;
+  background-color: #F9F9F9; /* Very light gray background color */
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+label {
+  width: 150px; /* Fixed width for labels */
+  margin-right: 15px; /* Space between label and input */
+  color: #000000; /* Black color for labels */
+  font-weight: bold;
+  text-align: right; /* Align text to the right */
+}
+
+input {
+  flex: 1; /* Allow input to take remaining space */
+  padding: 10px;
+  border: 1px solid #CCCCCC; /* Same border color as .form-group */
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: #FFFFFF; /* White background color for inputs */
+}
+
+input:focus {
+  border-color: #000000; /* Black border color on focus */
+  background-color: #F0F0F0; /* Slightly darker background color on focus */
+  outline: none;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #000000; /* Black button background color */
+  color: #FFFFFF; /* White text color */
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #333333; /* Dark gray background color on hover */
+}
+
+.error {
+  color: #FF0000; /* Red color for errors */
+  font-size: 0.875em;
+  margin-top: 5px;
+}
